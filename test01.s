@@ -30,6 +30,16 @@ cmp_mw	.macro
 		sbc	(\2)+1
 		.endm
 
+add_iw	.macro
+		clc
+		lda	<(\1)
+		adc	#LOW(\2)
+		sta <(\1)
+		lda	<(\1)+1
+		adc #HIGH(\2)
+		sta <(\1)+1
+		.endm
+
 add_zw	.macro
 		clc
 		lda	<(\1)
@@ -218,8 +228,8 @@ oam_clr_loop:
 ;.endif
 
 	mov_iw	arg0,string
-	mov_iw	arg1,4
-	mov_iw	arg2,9
+	ldx	#4
+	ldy	#9
 	jsr	PRINT
 
 ; 無限ループ
@@ -233,8 +243,8 @@ oam_clr_loop:
 	jsr	GETDEC8
 
 	mov_iw	arg0,DECSTR
-	mov_iw	arg1,4
-	mov_iw	arg2,10
+	ldx	#4
+	ldy #10
 	jsr	PRINT
 
 
@@ -242,8 +252,8 @@ oam_clr_loop:
 	jsr	GETDEC16
 
 	mov_iw	arg0,DECSTR
-	mov_iw	arg1,4
-	mov_iw	arg2,11
+	ldx	#4
+	ldy #11
 	jsr	PRINT
 
 ;	mov_iw	_AX,65535
@@ -252,16 +262,16 @@ oam_clr_loop:
 	jsr	GETDEC32
 
 	mov_iw	arg0,DECSTR
-	mov_iw	arg1,4
-	mov_iw	arg2,12
+	ldx	#4
+	ldy	#12
 	jsr	PRINT
 
 	lda	#$DE
 	jsr	GETHEX
 
 	mov_iw	arg0,HEXSTR
-	mov_iw	arg1,4
-	mov_iw	arg2,13
+	ldx	#4
+	ldy #13
 	jsr	PRINT
 
 ; スクロール設定
@@ -293,26 +303,29 @@ vsync:
 	;-------------------------------------------------
 	; 文字列プリント
 	; arg0 = String
-	; arg1 = X
-	; arg2 = Y
+	; Xreg = X位置
+	; Yreg = Y位置
 	;-------------------------------------------------
 PRINT:
 ; ネームテーブルへ転送(画面の中央付近)
-	Y * 32 + X + $2000
-;	add_zw arg2,arg2
-	add_zw arg2,arg2
-	add_zw arg2,arg2
-	add_zw arg2,arg2
-	add_zw arg2,arg2
-	add_zw arg2,arg2
-	add_zw arg1,arg2
-	lda	<arg1+1
-	clc
-	adc	#$20
-	sta	<arg1+1
+;	Y * 32 + X + $2000
+	lda	#0
+	stx <_AL
+	sta	<_AH
+	add_iw	_AX,#$2000
+	sty	<_BL
+	sta	<_BH
+;	add_zw	_BX,_BX
+	add_zw	_BX,_BX
+	add_zw	_BX,_BX
+	add_zw	_BX,_BX
+	add_zw	_BX,_BX
+	add_zw	_BX,_BX
+	add_zw	_BX,_AX
 
+	lda	<_BH
 	sta	$2006			; High
-	lda	<arg1
+	lda	<_BL
 	sta	$2006			; Low
 	ldy	#$00
 prt_loop:
